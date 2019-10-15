@@ -1,3 +1,5 @@
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -46,8 +48,22 @@ class _DicePageState extends State<DicePage> {
     );
   }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    AudioCache audioPlayer = AudioCache();
+    audioPlayer.loop('backgroundAudio.mp3', volume: 0.5);
+
+    print('播放背景音乐成功');
+  }
+
   void _buttonClick() {
     print('button click');
+    AudioCache audioPlayer1 = AudioCache();
+    audioPlayer1.play('throwdice.mp3');
+    print('播放音乐成功');
+
     setState(() {
       this.diceleft = Random().nextInt(6) + 1;
       this.diceright = Random().nextInt(6) + 1;
