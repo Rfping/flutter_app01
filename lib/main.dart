@@ -23,8 +23,11 @@ class DicePage extends StatefulWidget {
   _DicePageState createState() => _DicePageState();
 }
 
-class _DicePageState extends State<DicePage> {
+class _DicePageState extends State<DicePage> with WidgetsBindingObserver {
   var diceleft = 1, diceright = 1;
+  static AudioCache audioCache = AudioCache();
+  static AudioPlayer audioPlayerWithCache;
+  static AudioPlayer audioPlayer = AudioPlayer(mode: PlayerMode.LOW_LATENCY);
 
   @override
   Widget build(BuildContext context) {
@@ -50,24 +53,75 @@ class _DicePageState extends State<DicePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    AudioCache audioPlayer = AudioCache();
-    audioPlayer.loop('backgroundAudio.mp3', volume: 0.5);
-
+    _buttonClick();
+    WidgetsBinding.instance.addObserver(this);
+    _playCacheAudio();
     print('播放背景音乐成功');
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _pauseCacheAudio();
+    print('dispose - do stop music');
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.inactive:
+        break;
+      case AppLifecycleState.resumed:
+        _resumeCacheAudio();
+        break;
+      case AppLifecycleState.paused:
+        _pauseCacheAudio();
+        break;
+      case AppLifecycleState.suspending:
+        break;
+    }
+  }
+
+  _playCacheAudio() async {
+    audioPlayerWithCache =
+        await audioCache.loop('backgroundAudio.mp3', volume: 0.5);
+  }
+
+  _pauseCacheAudio() async {
+    audioPlayerWithCache.pause();
+  }
+
+  _resumeCacheAudio() async {
+    await audioPlayerWithCache.resume();
+  }
+
+  _playHttpsAudio() async {
+    int result = await audioPlayer.play(
+        'https://netx-teaching-resource.oss-cn-shenzhen.aliyuncs.com/flutter/video/backgroundAudio.mp3');
+    if (result == 1) {
+      // success
+      audioPlayer.setReleaseMode(ReleaseMode.LOOP);
+    }
+  }
+
+  _stopHttpsAudio() async {
+    int result = await audioPlayer.stop();
+    if (result == 1) {
+      // success
+      audioPlayer.setReleaseMode(ReleaseMode.RELEASE);
+    }
   }
 
   void _buttonClick() {
     print('button click');
     AudioCache audioPlayer1 = AudioCache();
     audioPlayer1.play('throwdice.mp3');
-    print('播放音乐成功');
 
     setState(() {
       this.diceleft = Random().nextInt(6) + 1;
       this.diceright = Random().nextInt(6) + 1;
     });
-    print('左侧骰子是：$diceleft，右侧骰子是：$diceright');
   }
 }
